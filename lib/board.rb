@@ -1,137 +1,92 @@
 class Board
-  attr_accessor :board
 
   def initialize
-    @board = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]]
-    @turn = 0
-    @gameover = false
-    @inputRow = ""
-    @inputColumn = ""
-    @playerTurn = "X"
-    puts "New Game Started. X's turn. Select a row and column i.e. 1,2"
-    self.display
-    while @gameover == false
-      self.win_condition
-      self.tie_condition
-      puts "Player #{@playerTurn}'s turn now."
-      self.input
-    end
+    @grid = [[" ", " ", " "],[" ", " ", " "],[" ", " ", " "]]
   end
-
-  def input
-    @input = gets.chomp
-    @inputRow = @input[0].to_i
-    @inputColumn = @input[2].to_i
-    if @playerTurn == "X"
-      self.turn_x(@inputRow,@inputColumn)
-    else 
-      self.turn_o(@inputRow,@inputColumn)
-    end
-  end
-
-  def tie_condition
-    @boxes = @board.flatten(1)
-    if @boxes.include?(" ") == false
-      @gameover == true
-      puts "Game tied."
-      exit
-    end
-  end
-
 
   def display
     puts "-" * 7
-    puts "|" + @board[0].join("|") + "|"
-    puts "-" * 7
-    puts "|" + @board[1].join("|") + "|"
-    puts "-" * 7
-    puts "|" + @board[2].join("|") + "|"
-    puts "-" * 7
-  end
-
-  def turn_o(row, column)
-    if @board[row][column] == " "
-      @turn += 1
-      puts "O placed on #{row},#{column} on turn #{@turn}"
-      @board[row][column] = "O"
-      self.display
-      @playerTurn = "X"
-    else
-      puts "That spot was taken, try again"
+    @grid.each do |row|
+      puts "|" + row.join("|") + "|"
+      puts "-" * 7
     end
   end
 
-  def turn_x(row, column)
-    if @board[row][column] == " "
-      @turn += 1
-      puts "X placed on #{row},#{column} on turn #{@turn}"
-      @board[row][column] = "X"
-      self.display
-      @playerTurn = "O"
-    else
-      puts "That spot was taken, try again"
+  def place_mark(row,col,mark)
+    row = row.to_i
+    col = col.to_i
+    if valid_move?(row,col)
+      @grid[row][col] = mark
+    end
+  end
+
+  def valid_move?(row,col)
+    row = row.to_i
+    col = col.to_i
+    empty = " "
+    if (@grid[row][col] != empty) ||
+       (row.between?(0,2) == false) ||
+       (col.between?(0,2) == false)
+      puts "Move invalid, try again"
+      return false
+    else 
+      return true
+    end
+  end
+
+  def winner?
+    check_rows
+    check_columns
+    check_diagonals
+    full?
+  end
+
+  private
+
+  def check_rows
+    @grid.each do |row|
+      if three_in_a_row?(row)
+        announce_winner(row[0])
+      end
     end
   end
   
-  def win_condition
-    for row in 0..2
-      if (@board[row][0] == @board[row][1]) &&
-         (@board[row][1] == @board[row][2]) &&
-         (@board[row][0] != " ") &&
-         (@board[row][1] != " ") &&
-         (@board[row][2] != " ")
-          if @board[row][1] == "X"
-            puts "Player X wins"
-          else puts "Player O wins"
-          end
-          @gameover = true
-          exit
+  def check_columns
+    (0..2).each do |col|
+      column = [@grid[0][col], @grid[1][col], @grid[2][col]]
+      if three_in_a_row?(column)
+        announce_winner(column[0])
       end
     end
-    for column in 0..2
-      if (@board[0][column] == @board[1][column]) &&
-         (@board[1][column] == @board[2][column]) &&
-         (@board[0][column] != " ") &&
-         (@board[1][column] != " ") &&
-         (@board[2][column] != " ")
-          if @board[1][column] == "X"
-            puts "Player X wins"
-          else puts "Player O wins"
-          end
-          @gameover = true
-          exit
-      end
-    end
+  end
 
-    #win conditions for diagonals
-    if (@board[0][0] == @board[1][1]) &&
-       (@board[1][1] == @board[2][2]) &&
-       (@board[0][0] != " ") &&
-       (@board[1][1] != " ") &&
-       (@board[2][2] != " ")
-        puts "Player #{@board[1][1]} wins"
-        @gameover = true
-        exit
+  def check_diagonals
+    diagonals = [
+      [@grid[0][0], @grid[1][1], @grid[2][2]],
+      [@grid[0][2], @grid[1][1], @grid[2][0]]
+    ]
+    
+    diagonals.each do |diag|
+      announce_winner(diag[0]) if three_in_a_row?(diag)
     end
-    if (@board[0][2] == @board[1][1]) &&
-       (@board[1][1] == @board[2][0]) &&
-       (@board[0][2] != " ") &&
-       (@board[1][1] != " ") &&
-       (@board[2][0] != " ")
-         puts "Player #{@board[1][1]} wins"
-         @gameover = true
-         exit
+  end
+  
+  def three_in_a_row?(line)
+    line.uniq.length == 1 && line.first != " "
+  end
+  
+  def announce_winner(mark)
+    puts "Player #{mark} wins"
+    @gameover = true
+    exit
+  end
+
+  def full?
+    flat_grid = @grid.flatten(1)
+    if flat_grid.include?(" ") == false
+      @gameover = true
+      puts "Game tied"
+      exit
     end
   end
 end
-
-new_game = Board.new
-# new_game.turn_o(1,1)
-# new_game.turn_x(0,0)
-# new_game.turn_o(2,2)
-# new_game.turn_x(1,0)
-# new_game.turn_o(2,0)
-# new_game.turn_x(2,1)
-# new_game.turn_o(1,2)
-# new_game.turn_x(0,1)
-# new_game.turn_o(0,2)
